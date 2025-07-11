@@ -1,7 +1,7 @@
 import express from 'express';
-import config from './backend/config/config.js';
-import MCPClientManager from './backend/modules/mcp-client-manager.js';
-import ConversationManager from './backend/modules/conversation-manager.js';
+import config from './config/config.js';
+import MCPClientManager from './modules/mcp-client-manager.js';
+import ConversationManager from './modules/conversation-manager.js';
 
 class ChatServer {
     constructor() {

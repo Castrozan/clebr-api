@@ -1,127 +1,174 @@
-# 🚀 MCP Chat Client
+# 🚀 Clebr API
 
-A modern chat interface that integrates with MCP (Model Context Protocol) servers with real-time communication and comprehensive e2e testing.
+A backend API server that provides MCP (Model Context Protocol) integration with OpenAI's GPT models for conversational AI applications.
 
 ## ✨ Features
 
-- 💬 **Interactive Chat Interface** - Clean, modern UI with user/bot message distinction
-- 🔗 **MCP Protocol Integration** - Real-time communication with MCP servers via JSON-RPC 2.0
-- 🌐 **CORS Proxy** - Built-in proxy server to handle cross-origin requests
-- 🔄 **Live Reload** - Automatic browser refresh during development
-- 🧪 **E2E Testing** - Comprehensive Playwright test suite
-- ⚡ **Hot Reload** - Automatic proxy server restart on code changes
+- 🔗 **MCP Protocol Integration** - Connect to MCP servers via JSON-RPC 2.0
+- 🤖 **OpenAI Integration** - GPT-powered conversational AI with tool calling
+- 🌐 **RESTful API** - Clean HTTP endpoints for chat operations
+- 📝 **Conversation Management** - Persistent conversation history per session
+- 🔒 **CORS Support** - Configurable cross-origin resource sharing
+- ⚡ **Session Management** - Multi-session support with unique identifiers
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js (v18+)
-- MCP Server running on `http://127.0.0.1:3000/mcp`
+- OpenAI API key
+- MCP Server (optional, runs in fallback mode without it)
+
+### Environment Setup
+
+Create a `.env` file in the root directory:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+MCP_SERVER_URL=http://127.0.0.1:3000/mcp  # Optional
+```
 
 ### Development
 
-Start the development environment (chat client + proxy server):
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-This command will:
-- 🖥️ Start the chat interface at `http://127.0.0.1:5500` with live reload
-- 🔗 Start the MCP proxy server at `http://127.0.0.1:3004` with auto-restart
-- 🌐 Automatically open the chat in your browser
+Start the production server:
+
+```bash
+npm start
+```
+
+The server will be running at `http://localhost:3004`
 
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development environment
-npm run proxy        # Start only the proxy server
-npm run chat         # Start only the chat client with live reload
-npm test             # Run e2e tests
-npm start            # Alias for npm run dev
+npm start            # Start production server
+npm run dev          # Start development server with nodemon
 ```
 
 ## 🏗️ Architecture
 
 ```
-Chat Client (5500) → Proxy Server (3004) → MCP Server (3000)
-     ↓                      ↓                    ↓
- Live Reload          CORS Headers         JSON-RPC 2.0
- Auto Refresh         Request Forward      Tool Execution
+Client Application → Clebr API Server → MCP Server (optional)
+                           ↓              ↓
+                      OpenAI GPT    Tool Execution
+                      Conversation  JSON-RPC 2.0
 ```
 
 ### Components
 
-- **Chat Client** (`chat.html`) - Frontend interface with MCP integration
-- **Proxy Server** (`proxy-server.js`) - CORS-enabled proxy for MCP communication  
-- **E2E Tests** (`tests/`) - Playwright test suite for UI validation
+- **Backend Server** (`backend-server.js`) - Main Express.js server
+- **MCP Client Manager** (`backend/modules/mcp-client-manager.js`) - Handles MCP connections
+- **Conversation Manager** (`backend/modules/conversation-manager.js`) - Manages OpenAI conversations
+- **Configuration** (`backend/config/config.js`) - Server configuration
+
+## 🔧 API Endpoints
+
+### Initialize MCP Session
+```http
+POST /mcp/initialize
+Content-Type: application/json
+
+{
+  "mcpServerUrl": "http://127.0.0.1:3000/mcp",
+  "mcpServerUrls": ["http://server1:3000/mcp", "http://server2:3000/mcp"]
+}
+```
+
+### Send Chat Message
+```http
+POST /chat
+Content-Type: application/json
+
+{
+  "message": "Hello, how can you help me?",
+  "sessionId": "your-session-id"
+}
+```
+
+### Get Session Info
+```http
+GET /mcp/session/{sessionId}
+```
+
+### Get Conversation History
+```http
+GET /chat/history/{sessionId}
+```
+
+### Clear Conversation
+```http
+DELETE /chat/history/{sessionId}
+```
+
+### Health Check
+```http
+GET /health
+```
 
 ## 🔧 Configuration
 
-### MCP Server URL
-The proxy forwards requests to `http://127.0.0.1:3000/mcp` by default. 
-To change this, edit `proxy-server.js`:
+### MCP Server Configuration
+Edit `backend/config/config.js` to configure MCP server settings:
 
 ```javascript
-const response = await axios({
-  // Change this URL to your MCP server
-  url: 'http://your-mcp-server:port/mcp',
-  // ...
-});
+export default {
+  mcp: {
+    defaultServerUrl: 'http://127.0.0.1:3000/mcp',
+    // ... other MCP settings
+  }
+};
 ```
 
-### CORS Settings  
-CORS is configured to allow requests from `http://127.0.0.1:5500`.
-To change this, edit the CORS headers in `proxy-server.js`:
-
-```javascript
-res.header('Access-Control-Allow-Origin', 'http://your-frontend-url');
-```
-
-## 🧪 Testing
-
-Run the comprehensive e2e test suite:
-
-```bash
-npm test
-```
-
-Tests cover:
-- ✅ Interface loading and element visibility
-- ✅ Message sending and receiving workflow
-- ✅ Empty message handling  
-- ✅ Loading state management
-- ✅ Auto-scroll behavior
-- ✅ Message history preservation
+### CORS Settings
+CORS is configured to allow requests from specified origins. Update the configuration as needed for your frontend applications.
 
 ## 📁 Project Structure
 
 ```
-chat-client/
-├── chat.html              # Main chat interface
-├── proxy-server.js        # MCP proxy server
-├── package.json           # Dependencies and scripts
-├── nodemon.json           # Proxy auto-restart config
-├── playwright.config.js   # E2E test configuration
-├── tests/
-│   └── chat.spec.js       # E2E test suite
-└── README.md              # This file
+clebr-api/
+├── backend-server.js                    # Main server entry point
+├── backend/
+│   ├── config/
+│   │   └── config.js                   # Server configuration
+│   └── modules/
+│       ├── mcp-client-manager.js       # MCP connection management
+│       └── conversation-manager.js     # OpenAI conversation handling
+├── package.json                        # Dependencies and scripts
+├── nodemon.json                        # Development configuration
+└── README.md                           # This file
 ```
 
 ## 🔄 Development Workflow
 
-1. **Start Development**: `npm run dev`
-2. **Make Changes**: Edit `chat.html` or `proxy-server.js` 
-3. **See Changes**: Browser auto-refreshes, proxy auto-restarts
-4. **Test Changes**: `npm test` to run e2e tests
-5. **Deploy**: Ready for production use
+1. **Clone Repository**: `git clone <repository-url>`
+2. **Install Dependencies**: `npm install`
+3. **Set Environment Variables**: Create `.env` file with OpenAI API key
+4. **Start Development**: `npm run dev`
+5. **Test API**: Use your favorite HTTP client to test endpoints
 
 ## 🚀 Production Deployment
 
-For production, you'll need to:
-1. Configure proper MCP server URLs
-2. Set up proper CORS policies
-3. Use a production-grade proxy (nginx, etc.)
-4. Enable HTTPS for secure communication
+For production deployment:
+
+1. **Environment Variables**: Set `OPENAI_API_KEY` and other required variables
+2. **MCP Server**: Configure MCP server URLs in config
+3. **CORS**: Update CORS settings for your frontend domains
+4. **Process Management**: Use PM2 or similar for process management
+5. **Reverse Proxy**: Consider nginx or similar for load balancing
+
+## 🔗 Integration
+
+This backend API can be integrated with any frontend application that needs conversational AI capabilities with MCP tool integration. The API provides a clean interface for:
+
+- Initializing MCP sessions
+- Sending chat messages
+- Managing conversation history
+- Accessing MCP tools and capabilities
 
 ---
 
